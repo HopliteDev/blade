@@ -10,6 +10,9 @@ import me.vaperion.blade.context.Context;
 import me.vaperion.blade.exception.BladeExitMessage;
 import me.vaperion.blade.exception.BladeUsageMessage;
 import me.vaperion.blade.util.Tuple;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
+import net.md_5.bungee.chat.ComponentSerializer;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.command.Command;
@@ -212,14 +215,14 @@ public final class BukkitContainer extends Command implements Container {
                 } catch (BladeUsageMessage ex) {
                     sendUsageMessage(context, finalCommand);
                 } catch (BladeExitMessage ex) {
-                    sender.sendMessage(ChatColor.RED + ex.getMessage());
+                    sender.spigot().sendMessage(this.jsonOrPlain(ex.getMessage())); // Hoplite - send potentially parsed component
                 } catch (InvocationTargetException ex) {
                     if (ex.getTargetException() != null) {
                         if (ex.getTargetException() instanceof BladeUsageMessage) {
                             sendUsageMessage(context, finalCommand);
                             return;
                         } else if (ex.getTargetException() instanceof BladeExitMessage) {
-                            sender.sendMessage(ChatColor.RED + ex.getTargetException().getMessage());
+                            sender.spigot().sendMessage(this.jsonOrPlain(ex.getTargetException().getMessage())); // Hoplite - send potentially parsed component
                             return;
                         }
                     }
@@ -254,7 +257,7 @@ public final class BukkitContainer extends Command implements Container {
         } catch (BladeUsageMessage ex) {
             sendUsageMessage(context, command);
         } catch (BladeExitMessage ex) {
-            sender.sendMessage(ChatColor.RED + ex.getMessage());
+            sender.spigot().sendMessage(this.jsonOrPlain(ex.getMessage())); // Hoplite - send potentially parsed component
         } catch (Throwable t) {
             t.printStackTrace();
             sender.sendMessage(ChatColor.RED + "An exception was thrown while executing this command.");
@@ -291,7 +294,7 @@ public final class BukkitContainer extends Command implements Container {
             blade.getCompleter().suggest(suggestions, context, command, actualArguments);
             return suggestions;
         } catch (BladeExitMessage ex) {
-            sender.sendMessage(ChatColor.RED + ex.getMessage());
+            sender.spigot().sendMessage(this.jsonOrPlain(ex.getMessage())); // Hoplite - send potentially parsed component
         } catch (Exception ex) {
             ex.printStackTrace();
             sender.sendMessage(ChatColor.RED + "An exception was thrown while completing this command.");
@@ -300,4 +303,13 @@ public final class BukkitContainer extends Command implements Container {
         return Collections.emptyList();
     }
 
+    // Hoplite start
+    private BaseComponent[] jsonOrPlain(String message) {
+        try {
+            return ComponentSerializer.parse(message);
+        } catch (Exception ignored) {
+            return TextComponent.fromLegacyText(message);
+        }
+    }
+    // Hoplite end
 }
